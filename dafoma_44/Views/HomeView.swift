@@ -11,6 +11,9 @@ struct HomeView: View {
     @StateObject private var taskViewModel = TaskViewModel()
     @StateObject private var noteViewModel = NoteViewModel()
     @StateObject private var analyticsViewModel = AnalyticsViewModel()
+    @StateObject private var goalViewModel = GoalViewModel()
+    @StateObject private var habitViewModel = HabitViewModel()
+    @StateObject private var templateViewModel = TemplateViewModel()
     
     @State private var selectedTab = 0
     @State private var showingTaskDetail = false
@@ -31,6 +34,8 @@ struct HomeView: View {
                         taskViewModel: taskViewModel,
                         noteViewModel: noteViewModel,
                         analyticsViewModel: analyticsViewModel,
+                        goalViewModel: goalViewModel,
+                        habitViewModel: habitViewModel,
                         onTaskTapped: { task in
                             selectedTask = task
                             showingTaskDetail = true
@@ -60,41 +65,52 @@ struct HomeView: View {
                     }
                     .tag(1)
                     
-                    // Notes Tab
-                    NoteListView(
-                        viewModel: noteViewModel,
+                    // Goals & Habits Tab
+                    GoalsHabitsTabView(
+                        goalViewModel: goalViewModel,
+                        habitViewModel: habitViewModel
+                    )
+                    .tabItem {
+                        Image(systemName: "target")
+                        Text("Goals")
+                    }
+                    .tag(2)
+                    
+                    // Focus Timer Tab
+                    PomodoroView()
+                        .tabItem {
+                            Image(systemName: "timer")
+                            Text("Focus")
+                        }
+                        .tag(3)
+                    
+                    // Templates Tab
+                    TemplatesView()
+                        .tabItem {
+                            Image(systemName: "doc.text")
+                            Text("Templates")
+                        }
+                        .tag(4)
+                    
+                    // More Tab (Notes, Planner, Analytics)
+                    MoreTabView(
+                        noteViewModel: noteViewModel,
+                        taskViewModel: taskViewModel,
+                        analyticsViewModel: analyticsViewModel,
+                        onTaskTapped: { task in
+                            selectedTask = task
+                            showingTaskDetail = true
+                        },
                         onNoteTapped: { note in
                             selectedNote = note
                             showingNoteDetail = true
                         }
                     )
                     .tabItem {
-                        Image(systemName: "note.text")
-                        Text("Notes")
+                        Image(systemName: "ellipsis")
+                        Text("More")
                     }
-                    .tag(2)
-                    
-                    // Planner Tab
-                    PlannerView(
-                        taskViewModel: taskViewModel,
-                        onTaskTapped: { task in
-                            selectedTask = task
-                            showingTaskDetail = true
-                        }
-                    )
-                    .tabItem {
-                        Image(systemName: "calendar")
-                        Text("Planner")
-                    }
-                    .tag(3)
-                    
-                    // Analytics Tab
-                    AnalyticsView(viewModel: analyticsViewModel)
-                        .tabItem {
-                            Image(systemName: "chart.xyaxis.line")
-                            Text("Analytics")
-                        }
-                        .tag(4)
+                    .tag(5)
                 }
                 .accentColor(Color(hex: "#0278fc"))
             }
@@ -132,6 +148,8 @@ struct DashboardView: View {
     @ObservedObject var taskViewModel: TaskViewModel
     @ObservedObject var noteViewModel: NoteViewModel
     @ObservedObject var analyticsViewModel: AnalyticsViewModel
+    @ObservedObject var goalViewModel: GoalViewModel
+    @ObservedObject var habitViewModel: HabitViewModel
     
     let onTaskTapped: (Task) -> Void
     let onNoteTapped: (Note) -> Void
@@ -149,8 +167,14 @@ struct DashboardView: View {
                 // Quick Stats
                 quickStatsView
                 
+                // Today's Habits
+                todaysHabitsView
+                
                 // Today's Tasks
                 todaysTasksView
+                
+                // Active Goals Progress
+                activeGoalsView
                 
                 // Recent Notes
                 recentNotesView
@@ -213,19 +237,94 @@ struct DashboardView: View {
             )
             
             StatCard(
-                title: "Completed",
-                value: "\(taskViewModel.taskStatistics.completedTasks)",
-                icon: "checkmark.circle.fill",
-                color: Color(hex: "#0278fc")
+                title: "Habits Done",
+                value: "\(habitViewModel.habitStatistics.completedToday)/\(habitViewModel.habitStatistics.activeHabits)",
+                icon: "flame.fill",
+                color: Color(hex: "#ee004a")
             )
             
             StatCard(
-                title: "Productivity",
-                value: String(format: "%.0f%%", analyticsViewModel.analytics.productivityScore * 100),
-                icon: "chart.line.uptrend.xyaxis",
-                color: Color(hex: "#ee004a")
+                title: "Goals Progress",
+                value: String(format: "%.0f%%", goalViewModel.goalStatistics.averageProgress * 100),
+                icon: "target",
+                color: Color(hex: "#0278fc")
             )
         }
+    }
+    
+    private var todaysHabitsView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Today's Habits")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                
+                Spacer()
+                
+                Text("\(habitViewModel.habitStatistics.completedTodayPercentage)%")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.8))
+            }
+            
+            if habitViewModel.todaysHabits.isEmpty {
+                Text("No habits for today")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.vertical, 20)
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(habitViewModel.todaysHabits.prefix(3)) { habit in
+                        HabitRowView(
+                            habit: habit,
+                            onComplete: { value in
+                                habitViewModel.recordHabitCompletion(habit.id, value: value)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
+    }
+    
+    private var activeGoalsView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Active Goals")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                
+                Spacer()
+                
+                Text("\(goalViewModel.goalStatistics.activeGoals) active")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.8))
+            }
+            
+            let activeGoals = goalViewModel.goals.filter { !$0.isCompleted }.prefix(3)
+            
+            if activeGoals.isEmpty {
+                Text("No active goals")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.vertical, 20)
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(activeGoals) { goal in
+                        GoalRowView(goal: goal)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+        )
     }
     
     private var todaysTasksView: some View {
@@ -379,17 +478,17 @@ struct DashboardView: View {
                 )
                 
                 QuickActionButton(
-                    title: "View Planner",
-                    icon: "calendar.badge.clock",
-                    color: Color(hex: "#0278fc"),
-                    action: { /* Switch to planner tab */ }
+                    title: "Start Focus",
+                    icon: "timer",
+                    color: Color(hex: "#ee004a"),
+                    action: { /* Switch to focus tab */ }
                 )
                 
                 QuickActionButton(
-                    title: "Analytics",
-                    icon: "chart.xyaxis.line",
-                    color: Color(hex: "#ee004a"),
-                    action: { /* Switch to analytics tab */ }
+                    title: "Templates",
+                    icon: "doc.text",
+                    color: Color(hex: "#d300ee"),
+                    action: { /* Switch to templates tab */ }
                 )
             }
         }
@@ -749,6 +848,288 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("This will permanently delete all your tasks, notes, and analytics data. This action cannot be undone.")
+        }
+    }
+}
+
+struct HabitRowView: View {
+    let habit: Habit
+    let onComplete: (Double) -> Void
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Button {
+                onComplete(1.0)
+            } label: {
+                Image(systemName: habit.isCompletedToday ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(habit.isCompletedToday ? Color(hex: "#54b702") : .white.opacity(0.6))
+            }
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(habit.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                
+                HStack {
+                    if habit.targetValue > 1 {
+                        Text("\(Int(habit.todaysProgress))/\(Int(habit.targetValue)) \(habit.unit)")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    
+                    if habit.streakCount > 0 {
+                        HStack(spacing: 2) {
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 8))
+                                .foregroundStyle(Color(hex: "#ee004a"))
+                            Text("\(habit.streakCount)")
+                                .font(.system(size: 8, weight: .semibold))
+                                .foregroundStyle(Color(hex: "#ee004a"))
+                        }
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            if habit.targetValue > 1 {
+                CircularProgressView(
+                    progress: habit.todaysProgress / habit.targetValue,
+                    color: habit.categoryColor,
+                    size: 24
+                )
+            }
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(.white.opacity(0.1))
+        )
+    }
+}
+
+struct GoalRowView: View {
+    let goal: Goal
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(goal.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                
+                Text("\(Int(goal.currentValue))/\(Int(goal.targetValue)) \(goal.unit)")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            
+            Spacer()
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(goal.progressPercentage)%")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.white)
+                
+                Text(goal.formattedDeadline)
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            
+            CircularProgressView(
+                progress: goal.progress,
+                color: goal.categoryColor,
+                size: 24
+            )
+        }
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(.white.opacity(0.1))
+        )
+    }
+}
+
+struct GoalsHabitsTabView: View {
+    @ObservedObject var goalViewModel: GoalViewModel
+    @ObservedObject var habitViewModel: HabitViewModel
+    @State private var selectedSegment = 0
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [Color(hex: "#f1ccc6"), Color(hex: "#53bef4")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Segment control
+                HStack(spacing: 0) {
+                    ForEach(["Goals", "Habits"], id: \.self) { segment in
+                        let index = segment == "Goals" ? 0 : 1
+                        Button {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                selectedSegment = index
+                            }
+                        } label: {
+                            Text(segment)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(selectedSegment == index ? .white : .white.opacity(0.7))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedSegment == index ? Color(hex: "#0278fc") : Color.clear)
+                                )
+                        }
+                    }
+                }
+                .padding(4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.ultraThinMaterial)
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                
+                // Content
+                if selectedSegment == 0 {
+                    GoalsView()
+                } else {
+                    HabitsView()
+                }
+            }
+        }
+    }
+}
+
+struct MoreTabView: View {
+    @ObservedObject var noteViewModel: NoteViewModel
+    @ObservedObject var taskViewModel: TaskViewModel
+    @ObservedObject var analyticsViewModel: AnalyticsViewModel
+    
+    let onTaskTapped: (Task) -> Void
+    let onNoteTapped: (Note) -> Void
+    
+    @State private var selectedMoreOption = 0
+    
+    var body: some View {
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [Color(hex: "#f1ccc6"), Color(hex: "#53bef4")],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("More")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
+                
+                // Options grid
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
+                    MoreOptionCard(
+                        title: "Notes",
+                        subtitle: "\(noteViewModel.notes.count) notes",
+                        icon: "note.text",
+                        color: Color(hex: "#fff707"),
+                        action: { selectedMoreOption = 1 }
+                    )
+                    
+                    MoreOptionCard(
+                        title: "Planner",
+                        subtitle: "Daily schedule",
+                        icon: "calendar",
+                        color: Color(hex: "#0278fc"),
+                        action: { selectedMoreOption = 2 }
+                    )
+                    
+                    MoreOptionCard(
+                        title: "Analytics",
+                        subtitle: "Productivity insights",
+                        icon: "chart.xyaxis.line",
+                        color: Color(hex: "#d300ee"),
+                        action: { selectedMoreOption = 3 }
+                    )
+                    
+                    MoreOptionCard(
+                        title: "Settings",
+                        subtitle: "App preferences",
+                        icon: "gear",
+                        color: Color(hex: "#54b702"),
+                        action: { selectedMoreOption = 4 }
+                    )
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                
+                Spacer()
+                
+                // Content based on selection
+                Group {
+                    switch selectedMoreOption {
+                    case 1:
+                        NoteListView(viewModel: noteViewModel, onNoteTapped: onNoteTapped)
+                    case 2:
+                        PlannerView(taskViewModel: taskViewModel, onTaskTapped: onTaskTapped)
+                    case 3:
+                        AnalyticsView(viewModel: analyticsViewModel)
+                    case 4:
+                        SettingsView()
+                    default:
+                        EmptyView()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct MoreOptionCard: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(color)
+                
+                VStack(spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                    
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+            )
         }
     }
 }
