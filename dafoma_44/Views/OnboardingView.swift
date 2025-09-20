@@ -319,7 +319,7 @@ struct OnboardingPage {
     static let allPages: [OnboardingPage] = [
         OnboardingPage(
             title: "Organize Your Tasks",
-            description: "Create, manage, and track your tasks with deadlines, priorities, and categories. Never miss an important deadline again.",
+            description: "Create, manage, and track",
             iconName: "list.bullet.clipboard",
             features: [
                 "Set deadlines and reminders",
@@ -331,7 +331,7 @@ struct OnboardingPage {
         ),
         OnboardingPage(
             title: "Take Smart Notes",
-            description: "Capture ideas, meeting notes, and important information. Link notes to tasks and organize them by categories.",
+            description: "Capture ideas, meeting notes",
             iconName: "note.text",
             features: [
                 "Rich text formatting",
@@ -343,7 +343,7 @@ struct OnboardingPage {
         ),
         OnboardingPage(
             title: "Plan Your Day",
-            description: "Visualize your schedule with an interactive timeline. See your tasks, deadlines, and free time at a glance.",
+            description: "Visualize your schedule",
             iconName: "calendar.badge.clock",
             features: [
                 "Interactive timeline view",
@@ -355,7 +355,7 @@ struct OnboardingPage {
         ),
         OnboardingPage(
             title: "Track Your Progress",
-            description: "Get insights into your productivity patterns with beautiful charts and analytics. Understand how you spend your time.",
+            description: "Get insights.",
             iconName: "chart.xyaxis.line",
             features: [
                 "Productivity analytics",
