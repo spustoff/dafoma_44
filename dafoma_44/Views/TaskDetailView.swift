@@ -255,15 +255,14 @@ struct TaskDetailView: View {
                     .padding(.bottom, 100)
                 }
             }
-        .navigationTitle(isEditing ? "Edit Task" : "New Task")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .overlay(alignment: .top) {
+        .navigationBarHidden(true)
+        .safeAreaInset(edge: .top) {
             // Custom navigation bar
             HStack {
                 Button("Cancel") {
                     dismiss()
                 }
+                .font(.system(size: 16, weight: .medium))
                 .foregroundStyle(.white)
                 
                 Spacer()
@@ -277,12 +276,18 @@ struct TaskDetailView: View {
                 Button("Save") {
                     saveTask()
                 }
-                .foregroundStyle(.white)
                 .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
                 .disabled(title.isEmpty)
+                .opacity(title.isEmpty ? 0.5 : 1.0)
             }
             .padding(.horizontal, 20)
-            .padding(.top, 50)
+            .padding(.vertical, 16)
+            .background(
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea(edges: .top)
+            )
         }
         }
         .onAppear {

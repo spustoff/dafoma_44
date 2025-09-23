@@ -510,12 +510,13 @@ struct HabitDetailView: View {
                 }
             }
             .navigationBarHidden(true)
-            .overlay(alignment: .top) {
+            .safeAreaInset(edge: .top) {
                 // Custom navigation bar
                 HStack {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.white)
                     
                     Spacer()
@@ -529,12 +530,18 @@ struct HabitDetailView: View {
                     Button("Save") {
                         saveHabit()
                     }
-                    .foregroundStyle(.white)
                     .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
                     .disabled(title.isEmpty || targetValue <= 0)
+                    .opacity((title.isEmpty || targetValue <= 0) ? 0.5 : 1.0)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 50)
+                .padding(.vertical, 16)
+                .background(
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea(edges: .top)
+                )
             }
         }
         .onAppear {

@@ -614,12 +614,13 @@ struct TemplateDetailView: View {
                 }
             }
             .navigationBarHidden(true)
-            .overlay(alignment: .top) {
+            .safeAreaInset(edge: .top) {
                 // Custom navigation bar
                 HStack {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.white)
                     
                     Spacer()
@@ -633,12 +634,18 @@ struct TemplateDetailView: View {
                     Button("Save") {
                         saveTemplate()
                     }
-                    .foregroundStyle(.white)
                     .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
                     .disabled(title.isEmpty)
+                    .opacity(title.isEmpty ? 0.5 : 1.0)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 50)
+                .padding(.vertical, 16)
+                .background(
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea(edges: .top)
+                )
             }
         }
         .onAppear {
@@ -885,12 +892,13 @@ struct RecurringTaskDetailView: View {
                 }
             }
             .navigationBarHidden(true)
-            .overlay(alignment: .top) {
+            .safeAreaInset(edge: .top) {
                 // Custom navigation bar
                 HStack {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.white)
                     
                     Spacer()
@@ -904,12 +912,18 @@ struct RecurringTaskDetailView: View {
                     Button("Save") {
                         saveRecurringTask()
                     }
-                    .foregroundStyle(.white)
                     .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
                     .disabled(title.isEmpty)
+                    .opacity(title.isEmpty ? 0.5 : 1.0)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 50)
+                .padding(.vertical, 16)
+                .background(
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea(edges: .top)
+                )
             }
         }
         .onAppear {

@@ -288,32 +288,39 @@ struct NoteDetailView: View {
                 .padding(.bottom, 100)
             }
         .navigationBarHidden(true)
-            .overlay(alignment: .top) {
-                // Custom navigation bar
-                HStack {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .foregroundStyle(.white)
-                    
-                    Spacer()
-                    
-                    Text(isEditing ? "Edit Note" : "New Note")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.white)
-                    
-                    Spacer()
-                    
-                    Button("Save") {
-                        saveNote()
-                    }
-                    .foregroundStyle(.white)
-                    .font(.system(size: 16, weight: .semibold))
-                    .disabled(title.isEmpty)
+        .safeAreaInset(edge: .top) {
+            // Custom navigation bar
+            HStack {
+                Button("Cancel") {
+                    dismiss()
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 50)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.white)
+                
+                Spacer()
+                
+                Text(isEditing ? "Edit Note" : "New Note")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.white)
+                
+                Spacer()
+                
+                Button("Save") {
+                    saveNote()
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.white)
+                .disabled(title.isEmpty)
+                .opacity(title.isEmpty ? 0.5 : 1.0)
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea(edges: .top)
+            )
+        }
         }
         .onAppear {
             loadNoteData()
